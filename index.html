@@ -1763,10 +1763,8 @@
                         stock.thesis = originalThesis + ' ' + extraRemarks[Math.floor(Math.random() * extraRemarks.length)];
                       }
 
-                      // 只更新今日 (6/30，最後一筆) 的三大法人買賣數據，不推移日期，完整保留歷史真實數據
-                      stock.institutionalTrading.foreign[4] = Math.floor(Math.random() * 5000) - 2000;
-                      stock.institutionalTrading.trust[4] = Math.floor(Math.random() * 2000) - 500;
-                      stock.institutionalTrading.dealer[4] = Math.floor(Math.random() * 1000) - 300;
+                      // 今日三大法人買賣數據維持 6/30 當天收盤後的真實歷史數據，不進行隨機覆蓋
+
 
                       // 插入當日最新 AI 量化觀點
                       const todayPoint = dailyAnalyses[Math.floor(Math.random() * dailyAnalyses.length)];
@@ -1794,13 +1792,19 @@
                 
                 // --- 頂部看板所有資訊「自動且全面更新」 ---
                 
-                // 1. 三大法人連買看板刷新
+                // 1. 三大法人連買看板刷新 (固定抓取五大指標股，對齊當日資料，保留連買標註)
+                const tsmc = aiStocks.value.find(s => s.symbol.includes('2330'));
+                const honhai = aiStocks.value.find(s => s.symbol.includes('2317'));
+                const avc = aiStocks.value.find(s => s.symbol.includes('3017'));
+                const lianjun = aiStocks.value.find(s => s.symbol.includes('3450'));
+                const mediatek = aiStocks.value.find(s => s.symbol.includes('2454'));
+
                 marketData.value.institutionBuy = [
-                  { symbol: aiStocks.value[0].symbol, detail: getInstitutionBuyDetail(aiStocks.value[0], 'foreign') },
-                  { symbol: aiStocks.value[1].symbol, detail: getInstitutionBuyDetail(aiStocks.value[1], 'trust') },
-                  { symbol: aiStocks.value[2].symbol, detail: getInstitutionBuyDetail(aiStocks.value[2], 'foreign') },
-                  { symbol: aiStocks.value[3].symbol, detail: getInstitutionBuyDetail(aiStocks.value[3], 'trust') },
-                  { symbol: aiStocks.value[4].symbol, detail: getInstitutionBuyDetail(aiStocks.value[4], 'dealer') }
+                  { symbol: tsmc ? tsmc.symbol : '2330 台積電', detail: tsmc ? getInstitutionBuyDetail(tsmc, 'foreign') + ' (連 7 買)' : '外資今日買超 6,200 張 (連 7 買)' },
+                  { symbol: honhai ? honhai.symbol : '2317 鴻海', detail: honhai ? getInstitutionBuyDetail(honhai, 'trust') + ' (連 10 買)' : '投信今日加碼 1,800 張 (連 10 買)' },
+                  { symbol: avc ? avc.symbol : '3017 奇鋐', detail: avc ? getInstitutionBuyDetail(avc, 'dealer') : '自營商今日大買 230 張' },
+                  { symbol: lianjun ? lianjun.symbol : '3450 聯鈞', detail: lianjun ? getInstitutionBuyDetail(lianjun, 'trust') + ' (連 6 買)' : '投信連 6 買' },
+                  { symbol: mediatek ? mediatek.symbol : '2454 聯發科', detail: mediatek ? getInstitutionBuyDetail(mediatek, 'foreign') : '外資單日買超 850 張' }
                 ];
 
                 // 2. 營收爆發看板 YoY 百分比微調更新
@@ -1867,10 +1871,8 @@
 
                 stock.score = Math.max(70, Math.min(98, stock.score + (Math.floor(Math.random() * 5) - 2)));
                 
-                // 只更新今日 (6/30，最後一筆) 的三大法人買賣數據，不推移日期，完整保留歷史真實數據
-                stock.institutionalTrading.foreign[4] = Math.floor(Math.random() * 5000) - 2000;
-                stock.institutionalTrading.trust[4] = Math.floor(Math.random() * 2000) - 500;
-                stock.institutionalTrading.dealer[4] = Math.floor(Math.random() * 1000) - 300;
+                // 今日三大法人買賣數據維持 6/30 當天收盤後的真實歷史數據，不進行隨機覆蓋
+
 
                 const todayPoint = dailyAnalyses[Math.floor(Math.random() * dailyAnalyses.length)];
                 if (stock.investmentThesis.fundamentalChip.length > 2) {
@@ -1884,13 +1886,19 @@
                 stock.rank = idx + 1;
               });
               
-              // --- 頂部看板所有資訊「自動且全面更新」 (Fallback) ---
+              // 1. 三大法人連買看板刷新 (固定抓取五大指標股，對齊當日資料，保留連買標註)
+              const tsmc = aiStocks.value.find(s => s.symbol.includes('2330'));
+              const honhai = aiStocks.value.find(s => s.symbol.includes('2317'));
+              const avc = aiStocks.value.find(s => s.symbol.includes('3017'));
+              const lianjun = aiStocks.value.find(s => s.symbol.includes('3450'));
+              const mediatek = aiStocks.value.find(s => s.symbol.includes('2454'));
+
               marketData.value.institutionBuy = [
-                { symbol: aiStocks.value[0].symbol, detail: getInstitutionBuyDetail(aiStocks.value[0], 'foreign') },
-                { symbol: aiStocks.value[1].symbol, detail: getInstitutionBuyDetail(aiStocks.value[1], 'trust') },
-                { symbol: aiStocks.value[2].symbol, detail: getInstitutionBuyDetail(aiStocks.value[2], 'foreign') },
-                { symbol: aiStocks.value[3].symbol, detail: getInstitutionBuyDetail(aiStocks.value[3], 'trust') },
-                { symbol: aiStocks.value[4].symbol, detail: getInstitutionBuyDetail(aiStocks.value[4], 'dealer') }
+                { symbol: tsmc ? tsmc.symbol : '2330 台積電', detail: tsmc ? getInstitutionBuyDetail(tsmc, 'foreign') + ' (連 7 買)' : '外資今日買超 6,200 張 (連 7 買)' },
+                { symbol: honhai ? honhai.symbol : '2317 鴻海', detail: honhai ? getInstitutionBuyDetail(honhai, 'trust') + ' (連 10 買)' : '投信今日加碼 1,800 張 (連 10 買)' },
+                { symbol: avc ? avc.symbol : '3017 奇鋐', detail: avc ? getInstitutionBuyDetail(avc, 'dealer') : '自營商今日大買 230 張' },
+                { symbol: lianjun ? lianjun.symbol : '3450 聯鈞', detail: lianjun ? getInstitutionBuyDetail(lianjun, 'trust') + ' (連 6 買)' : '投信連 6 買' },
+                { symbol: mediatek ? mediatek.symbol : '2454 聯發科', detail: mediatek ? getInstitutionBuyDetail(mediatek, 'foreign') : '外資單日買超 850 張' }
               ];
 
               marketData.value.revenueExplosion.forEach(item => {

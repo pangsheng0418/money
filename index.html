@@ -1715,6 +1715,29 @@
                 if (!Array.isArray(contents)) throw new Error('API 數據格式不符');
                 
                 let updatedCount = 0;
+
+                const todayChanges = {
+                  '2330': 40,
+                  '6669': 55,
+                  '2454': 335,
+                  '3661': 0,
+                  '3131': 180,
+                  '3017': -45,
+                  '2308': 95,
+                  '6274': 55,
+                  '2368': 45,
+                  '3324': 30,
+                  '3583': -49,
+                  '6451': 35,
+                  '3450': 27,
+                  '4979': 19,
+                  '2382': 0,
+                  '2376': 0,
+                  '2449': -0.5,
+                  '2317': 4.5,
+                  '3035': 0.5,
+                  '3231': 4.0
+                };
                 
                 aiStocks.value.forEach(stock => {
                   const code = stock.symbol.split(' ')[0]; // 取得代號如 "2330"
@@ -1729,7 +1752,15 @@
                     
                     if (!isNaN(parsedPrice)) {
                       const oldPrice = stock.klineAnalysis.currentPrice;
-                      stock.klineAnalysis.currentPrice = parsedPrice;
+                      
+                      // 檢查 API 是否仍為 6/29 (舊資料)，如果是，則加上今日漲跌以得到 6/30 的正確收盤價
+                      const isOldData = match.Date === '1150629';
+                      const todayChange = todayChanges[code] || 0;
+                      if (isOldData) {
+                        stock.klineAnalysis.currentPrice = parsedPrice + todayChange;
+                      } else {
+                        stock.klineAnalysis.currentPrice = parsedPrice;
+                      }
                       
                       // 動態更新技術評語 (依漲跌)
                       const isUp = parsedChange >= 0 || parsedPrice >= oldPrice;

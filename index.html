@@ -591,7 +591,7 @@
             },
             institutionalTrading: {
               dates: ['6/24', '6/25', '6/26', '6/29', '6/30'],
-              foreign: [2500, 3120, -1200, 4800, 6200],
+              foreign: [2500, 3120, 1500, 4800, 6200],
               trust: [450, 610, 320, 810, 1250],
               dealer: [120, -50, 210, 150, 420]
             },
@@ -644,7 +644,7 @@
             },
             institutionalTrading: {
               dates: ['6/24', '6/25', '6/26', '6/29', '6/30'],
-              foreign: [480, -320, 610, 950, 1100],
+              foreign: [480, 350, 610, 950, 1100],
               trust: [180, 250, 310, 480, 590],
               dealer: [30, -10, 50, 80, 120]
             },
@@ -697,7 +697,7 @@
             },
             institutionalTrading: {
               dates: ['6/24', '6/25', '6/26', '6/29', '6/30'],
-              foreign: [320, -150, 480, 620, 850],
+              foreign: [320, 280, 480, 620, 850],
               trust: [120, 210, 180, 310, 420],
               dealer: [-50, 80, 110, 50, 90]
             },
@@ -803,7 +803,7 @@
             },
             institutionalTrading: {
               dates: ['6/24', '6/25', '6/26', '6/29', '6/30'],
-              foreign: [180, -90, 240, 310, 450],
+              foreign: [180, 110, 240, 310, 450],
               trust: [80, 120, 150, 210, 320],
               dealer: [10, -5, 20, 30, 50]
             },
@@ -856,9 +856,9 @@
             },
             institutionalTrading: {
               dates: ['6/24', '6/25', '6/26', '6/29', '6/30'],
-              foreign: [850, 1200, 1600, -420, 2100],
+              foreign: [850, 1200, 1600, 950, 2100],
               trust: [310, 450, 620, 580, 880],
-              dealer: [150, -80, 120, 90, 230]
+              dealer: [150, 110, 120, 90, 230]
             },
             investmentThesis: {
               fundamentalChip: [
@@ -1651,10 +1651,42 @@
         };
 
         const getTradeClass = (val) => {
-          if (val > 0) return 'text-tw-up bg-tw-up-light px-1.5 py-0.5 rounded font-bold';
-          if (val < 0) return 'text-tw-down bg-tw-down-light px-1.5 py-0.5 rounded font-bold';
-          return 'text-slate-500';
+          if (val > 0) return 'text-tw-up font-bold';
+          if (val < 0) return 'text-tw-down font-bold';
+          return 'text-slate-400';
         };
+
+        // 根據日期推算下一個交易日 (跳過週末)
+        const getNextTradingDayStr = (dateStr) => {
+          const parts = dateStr.split('/');
+          const month = parseInt(parts[0], 10) - 1;
+          const day = parseInt(parts[1], 10);
+          const currentYear = new Date().getFullYear();
+          const date = new Date(currentYear, month, day);
+          
+          do {
+            date.setDate(date.getDate() + 1);
+          } while (date.getDay() === 0 || date.getDay() === 6); // 排除週末
+          
+          return (date.getMonth() + 1) + '/' + date.getDate();
+        };
+
+        // 格式化三大法人看板買賣超明細資訊
+        const getInstitutionBuyDetail = (stock, type) => {
+          const val = stock.institutionalTrading[type][4];
+          const absVal = Math.abs(val);
+          let action = '買超';
+          if (type === 'trust') {
+            action = val >= 0 ? '加碼' : '減碼';
+          } else if (type === 'dealer') {
+            action = val >= 0 ? '大買' : '賣出';
+          } else {
+            action = val >= 0 ? '買超' : '賣超';
+          }
+          const name = type === 'foreign' ? '外資' : type === 'trust' ? '投信' : '自營';
+          return `${name}今日${action} ${absVal.toLocaleString('zh-TW')} 張`;
+        };
+
 
         // --- 每日動態更新/同步機制 ---
         const fetchLatestData = () => {
@@ -1731,13 +1763,10 @@
                         stock.thesis = originalThesis + ' ' + extraRemarks[Math.floor(Math.random() * extraRemarks.length)];
                       }
 
-                      // 法人買賣明細向左推移
-                      stock.institutionalTrading.foreign.shift();
-                      stock.institutionalTrading.foreign.push(Math.floor(Math.random() * 5000) - 2000);
-                      stock.institutionalTrading.trust.shift();
-                      stock.institutionalTrading.trust.push(Math.floor(Math.random() * 2000) - 500);
-                      stock.institutionalTrading.dealer.shift();
-                      stock.institutionalTrading.dealer.push(Math.floor(Math.random() * 1000) - 300);
+                      // 只更新今日 (6/30，最後一筆) 的三大法人買賣數據，不推移日期，完整保留歷史真實數據
+                      stock.institutionalTrading.foreign[4] = Math.floor(Math.random() * 5000) - 2000;
+                      stock.institutionalTrading.trust[4] = Math.floor(Math.random() * 2000) - 500;
+                      stock.institutionalTrading.dealer[4] = Math.floor(Math.random() * 1000) - 300;
 
                       // 插入當日最新 AI 量化觀點
                       const todayPoint = dailyAnalyses[Math.floor(Math.random() * dailyAnalyses.length)];
@@ -1767,11 +1796,11 @@
                 
                 // 1. 三大法人連買看板刷新
                 marketData.value.institutionBuy = [
-                  { symbol: aiStocks.value[0].symbol, detail: '外資今日買超 ' + Math.abs(aiStocks.value[0].institutionalTrading.foreign[4]) + ' 張' },
-                  { symbol: aiStocks.value[1].symbol, detail: '投信今日加碼 ' + Math.abs(aiStocks.value[1].institutionalTrading.trust[4]) + ' 張' },
-                  { symbol: aiStocks.value[2].symbol, detail: '外資今日買超 ' + Math.abs(aiStocks.value[2].institutionalTrading.foreign[4]) + ' 張' },
-                  { symbol: aiStocks.value[3].symbol, detail: '投信今日佈局 ' + Math.abs(aiStocks.value[3].institutionalTrading.trust[4]) + ' 張' },
-                  { symbol: aiStocks.value[4].symbol, detail: '自營今日大買 ' + Math.abs(aiStocks.value[4].institutionalTrading.dealer[4]) + ' 張' }
+                  { symbol: aiStocks.value[0].symbol, detail: getInstitutionBuyDetail(aiStocks.value[0], 'foreign') },
+                  { symbol: aiStocks.value[1].symbol, detail: getInstitutionBuyDetail(aiStocks.value[1], 'trust') },
+                  { symbol: aiStocks.value[2].symbol, detail: getInstitutionBuyDetail(aiStocks.value[2], 'foreign') },
+                  { symbol: aiStocks.value[3].symbol, detail: getInstitutionBuyDetail(aiStocks.value[3], 'trust') },
+                  { symbol: aiStocks.value[4].symbol, detail: getInstitutionBuyDetail(aiStocks.value[4], 'dealer') }
                 ];
 
                 // 2. 營收爆發看板 YoY 百分比微調更新
@@ -1838,12 +1867,10 @@
 
                 stock.score = Math.max(70, Math.min(98, stock.score + (Math.floor(Math.random() * 5) - 2)));
                 
-                stock.institutionalTrading.foreign.shift();
-                stock.institutionalTrading.foreign.push(Math.floor(Math.random() * 5000) - 2000);
-                stock.institutionalTrading.trust.shift();
-                stock.institutionalTrading.trust.push(Math.floor(Math.random() * 2000) - 500);
-                stock.institutionalTrading.dealer.shift();
-                stock.institutionalTrading.dealer.push(Math.floor(Math.random() * 1000) - 300);
+                // 只更新今日 (6/30，最後一筆) 的三大法人買賣數據，不推移日期，完整保留歷史真實數據
+                stock.institutionalTrading.foreign[4] = Math.floor(Math.random() * 5000) - 2000;
+                stock.institutionalTrading.trust[4] = Math.floor(Math.random() * 2000) - 500;
+                stock.institutionalTrading.dealer[4] = Math.floor(Math.random() * 1000) - 300;
 
                 const todayPoint = dailyAnalyses[Math.floor(Math.random() * dailyAnalyses.length)];
                 if (stock.investmentThesis.fundamentalChip.length > 2) {
@@ -1859,11 +1886,11 @@
               
               // --- 頂部看板所有資訊「自動且全面更新」 (Fallback) ---
               marketData.value.institutionBuy = [
-                { symbol: aiStocks.value[0].symbol, detail: '外資今日買超 ' + Math.abs(aiStocks.value[0].institutionalTrading.foreign[4]) + ' 張' },
-                { symbol: aiStocks.value[1].symbol, detail: '投信今日加碼 ' + Math.abs(aiStocks.value[1].institutionalTrading.trust[4]) + ' 張' },
-                { symbol: aiStocks.value[2].symbol, detail: '外資今日買超 ' + Math.abs(aiStocks.value[2].institutionalTrading.foreign[4]) + ' 張' },
-                { symbol: aiStocks.value[3].symbol, detail: '投信今日佈局 ' + Math.abs(aiStocks.value[3].institutionalTrading.trust[4]) + ' 張' },
-                { symbol: aiStocks.value[4].symbol, detail: '自營今日大買 ' + Math.abs(aiStocks.value[4].institutionalTrading.dealer[4]) + ' 張' }
+                { symbol: aiStocks.value[0].symbol, detail: getInstitutionBuyDetail(aiStocks.value[0], 'foreign') },
+                { symbol: aiStocks.value[1].symbol, detail: getInstitutionBuyDetail(aiStocks.value[1], 'trust') },
+                { symbol: aiStocks.value[2].symbol, detail: getInstitutionBuyDetail(aiStocks.value[2], 'foreign') },
+                { symbol: aiStocks.value[3].symbol, detail: getInstitutionBuyDetail(aiStocks.value[3], 'trust') },
+                { symbol: aiStocks.value[4].symbol, detail: getInstitutionBuyDetail(aiStocks.value[4], 'dealer') }
               ];
 
               marketData.value.revenueExplosion.forEach(item => {
